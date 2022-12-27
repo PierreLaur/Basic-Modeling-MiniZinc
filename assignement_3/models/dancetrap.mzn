@@ -22,6 +22,10 @@ int: boredom; % how bored each step make the viewer
 
 var STEP: len;
 
+constraint len<=sum(m in LEGS diff {stand})(maxlegs[m]);
+constraint len<=sum(m in ARMS diff {neutral})(maxarms[m]);
+constraint len<=sum(m in FACE diff {blank})(maxface[m]);
+
 array[STEP] of var LEGS: legs;
 array[STEP] of var ARMS: arms;
 array[STEP] of var FACE: face;
@@ -36,7 +40,7 @@ constraint global_cardinality_low_up(arms, ARMS, [0|i in ARMS], maxarms);
 constraint global_cardinality_low_up(face, FACE, [0|i in FACE], maxface);
 
 include "regular.mzn";
-array[1..card(LEGS)+3, LEGS] of 0..card(LEGS)+3 : legs_automaton =
+array[1..9, LEGS] of 0..9 : legs_automaton =
     [| 0,0,0,4,5,6
      | 1,0,3,0,0,6
      | 1,0,7,4,5,6
@@ -48,13 +52,13 @@ array[1..card(LEGS)+3, LEGS] of 0..card(LEGS)+3 : legs_automaton =
      | 1,0,0,4,5,6 % third waltz in a row
 
      | 1,0,3,4,5,6 |]; % start state
-constraint regular(legs, card(LEGS)+3, card(LEGS), legs_automaton, card(LEGS)+3, {6});
+constraint regular(legs, 9, 6, legs_automaton, 9, {6});
 
 constraint forall(l1 in 1..len-1 where legs[l1]=waltz)
                 (forall(l2 in l1+1..len where legs[l2]=curtsey)(exists(l3 in l1+1..l2-1)(legs[l3]=stand)));
 
 
-array[1..card(ARMS)+1, ARMS] of 0..card(ARMS)+1 : arms_automaton =
+array[1..6, ARMS] of 0..6 : arms_automaton =
     [| 0,2,3,4,5
      | 1,0,3,0,5
      | 1,2,0,0,5
@@ -62,29 +66,29 @@ array[1..card(ARMS)+1, ARMS] of 0..card(ARMS)+1 : arms_automaton =
      | 0,2,3,4,5
 
      | 0,2,3,4,5 |];
-constraint regular(arms, card(ARMS)+1, card(ARMS), arms_automaton, card(ARMS), {neutral});
+constraint regular(arms, 6, 5, arms_automaton, 6, {neutral});
 
 
-array[1..2*card(FACE)+1, FACE] of 0..2*card(FACE)+1 : face_automaton =
-    [| 7,2,3,0,5,6
-     | 1,8,3,4,5,6
-     | 1,2,9,0,5,6
-     | 1,2,3,10,5,6
-     | 1,2,3,4,11,6
-     | 1,2,3,4,5,12
+array[1..12, FACE] of 0..12 : face_automaton =
+    [| 6,2,3,0,5,11
+     | 1,7,3,4,5,11
+     | 1,2,8,0,5,11
+     | 1,2,3,9,5,11
+     | 1,2,3,4,10,11
 
-     | 0,2,3,0,5,6  % second time a gesture is made in a row
-     | 1,0,3,4,5,6
-     | 1,2,0,0,5,6
-     | 1,2,3,0,5,6
-     | 1,2,3,4,0,6
-     | 1,2,3,4,5,6
+     | 0,2,3,0,5,11  % second time a gesture is made in a row
+     | 1,0,3,4,5,11
+     | 1,2,0,0,5,11
+     | 1,2,3,0,5,11
+     | 1,2,3,4,0,11
+     
+     | 1,2,3,4,5,11 % neutral
 
-     | 1,2,3,4,5,6 |];
-constraint regular(face, 2*card(FACE)+1, card(FACE), face_automaton, 2*card(FACE)+1, {6, 12});
+     | 1,2,3,4,5,11 |]; % starting state
+constraint regular(face, 12, 6, face_automaton, 12, {11});
+
 
 constraint forall(s in STEP where s>len)(legs[s]=stand /\ arms[s]=neutral /\ face[s]=blank);
-
 constraint forall(s in STEP)(dance_value[legs[s], arms[s]] >=0 /\ entice_value[arms[s], face[s]]>=0);
 
 var int : objective;
